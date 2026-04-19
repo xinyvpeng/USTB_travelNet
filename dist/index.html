@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script type="module" crossorigin src="/USTB_travelNet/assets/index-DKIw3BHa.js"></script>
+  <script type="module" crossorigin src="/USTB_travelNet/assets/index-nd33kjZE.js"></script>
   <link rel="modulepreload" crossorigin href="/USTB_travelNet/assets/vendor-B_UG5KUY.js">
-  <link rel="stylesheet" crossorigin href="/USTB_travelNet/assets/index-B-dO6HvZ.css">
+  <link rel="stylesheet" crossorigin href="/USTB_travelNet/assets/index-CSzzRwcH.css">
 </head>
 <body>
   <div class="app-container">
@@ -31,6 +31,18 @@
           <i class="fas fa-radiation-alt"></i>
           <span>探索半径：<strong>500 km</strong></span>
         </div>
+      </div>
+      <div class="auth-info">
+        <div id="authStatus" class="auth-status">
+          <i class="fas fa-user"></i>
+          <span id="authUsername">未登录用户（只读）</span>
+        </div>
+        <button id="loginBtn" class="btn-auth">
+          <i class="fas fa-sign-in-alt"></i> 登录
+        </button>
+        <button id="logoutBtn" class="btn-auth btn-auth-logout" style="display: none;">
+          <i class="fas fa-sign-out-alt"></i> 退出
+        </button>
       </div>
     </header>
 
@@ -161,6 +173,42 @@
         <a href="#" id="helpBtn"><i class="fas fa-question-circle"></i> 帮助</a>
       </div>
     </footer>
+
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-lock"></i> 用户认证</h2>
+          <button class="modal-close" id="loginModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="auth-description">
+            此项目为个人旅行探索系统。匿名用户可以查看所有内容，但只有认证用户才能进行编辑操作。
+            如需编辑功能，请输入认证密码。
+          </p>
+          <div class="auth-form">
+            <div class="form-group">
+              <label for="loginPassword"><i class="fas fa-key"></i> 认证密码</label>
+              <input type="password" id="loginPassword" placeholder="请输入认证密码" autocomplete="current-password">
+              <div class="form-hint">
+                提示：密码已通过环境变量配置
+              </div>
+            </div>
+            <div class="form-actions">
+              <button id="loginSubmitBtn" class="btn-primary">
+                <i class="fas fa-sign-in-alt"></i> 登录
+              </button>
+              <button id="loginCancelBtn" class="btn-secondary">
+                取消
+              </button>
+            </div>
+          </div>
+          <div class="auth-info-note">
+            <p><i class="fas fa-info-circle"></i> 此项目为开源项目，其他人可以克隆到自己的仓库进行修改和使用。</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 模态框容器 -->
     <div id="modalContainer"></div>

@@ -9,6 +9,12 @@ const CONFIG = {
   radiusKm: 500,            // 探索半径（公里）
   earthRadiusKm: 6371,      // 地球半径（公里）
   
+  // 认证配置 - 密码通过环境变量设置，生产环境中应替换
+  auth: {
+    password: 'TravelNet2024!', // 默认密码，在实际部署时应通过环境变量设置
+    storageKey: 'travelnet_auth_token'
+  },
+  
   // 存储配置
   storageKeys: {
     visitedCities: 'travelnet_visited_cities',
@@ -27,7 +33,12 @@ const AppState = {
   travelRecords: [],        // 旅游记录
   selectedCity: null,       // 当前选中的城市
   networkGraph: null,       // D3网络图实例
-  zoomLevel: 1              // 当前缩放级别
+  zoomLevel: 1,             // 当前缩放级别
+  
+  // 认证状态
+  isAuthenticated: false,   // 用户是否已认证
+  authToken: null,          // 认证令牌
+  authUsername: '未登录用户' // 认证用户名
 };
 
 // 工具函数 - 地理计算
@@ -290,6 +301,82 @@ const DataManager = {
   }
 };
 
+// 认证管理器
+const AuthManager = {
+  // 初始化认证状态
+  init() {
+    // 尝试从localStorage加载认证令牌
+    const token = localStorage.getItem(CONFIG.auth.storageKey);
+    if (token && this.validateToken(token)) {
+      AppState.authToken = token;
+      AppState.isAuthenticated = true;
+      AppState.authUsername = '项目所有者';
+      console.log('认证状态已恢复');
+    } else {
+      // 清除无效令牌
+      localStorage.removeItem(CONFIG.auth.storageKey);
+      AppState.authToken = null;
+      AppState.isAuthenticated = false;
+      AppState.authUsername = '未登录用户';
+    }
+  },
+
+  // 验证令牌
+  validateToken(token) {
+    // 简单验证：检查令牌是否存在且不为空
+    return token && token.trim().length > 0;
+  },
+
+  // 登录
+  login(password) {
+    if (password === CONFIG.auth.password) {
+      // 生成简单令牌（时间戳 + 随机数）
+      const token = `travelnet_auth_${Date.now()}_${Math.random().toString(36).substr(2)}`;
+      
+      // 存储令牌
+      localStorage.setItem(CONFIG.auth.storageKey, token);
+      
+      // 更新应用状态
+      AppState.authToken = token;
+      AppState.isAuthenticated = true;
+      AppState.authUsername = '项目所有者';
+      
+      console.log('登录成功');
+      return { success: true, message: '登录成功' };
+    } else {
+      console.log('登录失败：密码错误');
+      return { success: false, message: '密码错误' };
+    }
+  },
+
+  // 登出
+  logout() {
+    // 清除令牌
+    localStorage.removeItem(CONFIG.auth.storageKey);
+    
+    // 更新应用状态
+    AppState.authToken = null;
+    AppState.isAuthenticated = false;
+    AppState.authUsername = '未登录用户';
+    
+    console.log('已退出登录');
+    return { success: true, message: '已退出登录' };
+  },
+
+  // 检查是否已认证
+  isAuthenticated() {
+    return AppState.isAuthenticated;
+  },
+
+  // 获取认证状态
+  getAuthStatus() {
+    return {
+      isAuthenticated: AppState.isAuthenticated,
+      username: AppState.authUsername
+    };
+  }
+};
+
 // UI管理器
 const UIManager = {
   // 初始化UI事件
@@ -332,6 +419,41 @@ const UIManager = {
     if (zoomInBtn) zoomInBtn.addEventListener('click', () => this.zoomIn());
     if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => this.zoomOut());
     if (resetViewBtn) resetViewBtn.addEventListener('click', () => this.resetView());
+    
+    // 认证相关事件
+    // 登录按钮
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => this.showLoginModal());
+    }
+    
+    // 退出按钮
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => this.handleLogout());
+    }
+    
+    // 登录表单提交
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => this.handleLoginSubmit(e));
+    }
+    
+    // 登录模态框关闭按钮
+    const loginCloseBtn = document.getElementById('loginCloseBtn');
+    if (loginCloseBtn) {
+      loginCloseBtn.addEventListener('click', () => this.hideLoginModal());
+    }
+    
+    // 点击模态框外部关闭
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+      loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) {
+          this.hideLoginModal();
+        }
+      });
+    }
     
     console.log('UI事件初始化完成');
   },
@@ -389,6 +511,13 @@ const UIManager = {
   // 确认选中城市（添加到旅游记录）
   async confirmSelectedCity() {
     if (!AppState.selectedCity) return;
+    
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
     
     const city = AppState.selectedCity;
     
@@ -645,14 +774,118 @@ const UIManager = {
 
   // 编辑记录（待实现）
   editRecord(recordId) {
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
+    
     console.log('编辑记录:', recordId);
     this.showNotification('编辑功能开发中...', 'info');
   },
 
   // 删除记录（待实现）
   deleteRecord(recordId) {
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
+    
     console.log('删除记录:', recordId);
     this.showNotification('删除功能开发中...', 'info');
+  },
+
+  // ===== 认证相关方法 =====
+  
+  // 显示登录模态框
+  showLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      // 清空密码字段
+      const passwordInput = document.getElementById('loginPassword');
+      if (passwordInput) {
+        passwordInput.value = '';
+        passwordInput.focus();
+      }
+    }
+  },
+
+  // 隐藏登录模态框
+  hideLoginModal() {
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  },
+
+  // 处理登录表单提交
+  handleLoginSubmit(event) {
+    event.preventDefault();
+    
+    const passwordInput = document.getElementById('loginPassword');
+    const password = passwordInput ? passwordInput.value : '';
+    
+    if (!password.trim()) {
+      this.showNotification('请输入密码', 'warning');
+      return;
+    }
+    
+    // 调用AuthManager.login
+    const result = AuthManager.login(password);
+    
+    if (result.success) {
+      this.hideLoginModal();
+      this.updateAuthUI();
+      this.showNotification('登录成功！您现在可以编辑内容。', 'success');
+    } else {
+      this.showNotification('密码错误，请重试', 'danger');
+      // 清空密码字段
+      if (passwordInput) {
+        passwordInput.value = '';
+        passwordInput.focus();
+      }
+    }
+  },
+
+  // 处理退出登录
+  handleLogout() {
+    if (confirm('确定要退出登录吗？退出后将无法编辑内容。')) {
+      const result = AuthManager.logout();
+      this.updateAuthUI();
+      this.showNotification('已退出登录', 'info');
+    }
+  },
+
+  // 更新认证UI状态
+  updateAuthUI() {
+    const authStatus = document.getElementById('authStatus');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const appContainer = document.getElementById('appContainer');
+    
+    if (AppState.isAuthenticated) {
+      // 已登录状态
+      if (authStatus) {
+        authStatus.textContent = '已登录 (项目所有者)';
+        authStatus.className = 'auth-status authenticated';
+      }
+      if (loginBtn) loginBtn.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'inline-block';
+      if (appContainer) appContainer.classList.remove('read-only');
+    } else {
+      // 未登录状态
+      if (authStatus) {
+        authStatus.textContent = '未登录 (只读模式)';
+        authStatus.className = 'auth-status not-authenticated';
+      }
+      if (loginBtn) loginBtn.style.display = 'inline-block';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      if (appContainer) appContainer.classList.add('read-only');
+    }
   }
 };
 
@@ -1068,10 +1301,13 @@ async function initApp() {
     // 1. 初始化存储
     await DataManager.initStorage();
     
-    // 2. 加载城市数据
+    // 2. 初始化认证状态
+    AuthManager.init();
+    
+    // 3. 加载城市数据
     await DataManager.loadCitiesData();
     
-    // 3. 加载用户数据
+    // 4. 加载用户数据
     await DataManager.loadUserData();
     
     // 4. 初始化UI事件
@@ -1090,6 +1326,7 @@ async function initApp() {
     UIManager.updateCityList(AppState.filteredCities);
     UIManager.updateTravelRecords();
     DataManager.updateUIFromState();
+    UIManager.updateAuthUI();
     
     console.log('TravelNet应用初始化完成！');
     
