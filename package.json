@@ -1,0 +1,22 @@
+{
+  "name": "travelnet",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "TravelNet — 智能周边城市探索与旅行决策系统",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "localforage": "^1.10.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": ["travel", "visualization", "d3", "geolocation"],
+  "author": "",
+  "license": "MIT"
+}

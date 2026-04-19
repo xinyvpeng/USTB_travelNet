@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelNet — 智能周边城市探索系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="module" crossorigin src="./assets/index-DKIw3BHa.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-B_UG5KUY.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-B-dO6HvZ.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 头部区域 -->
+    <header class="app-header">
+      <div class="logo">
+        <i class="fas fa-satellite-dish"></i>
+        <h1>TravelNet</h1>
+        <span class="subtitle">智能周边城市探索系统</span>
+      </div>
+      <div class="location-info">
+        <div class="location-coord">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>当前位置：北京科技大学</span>
+          <code>39.99048°N, 116.36087°E</code>
+        </div>
+        <div class="radius-info">
+          <i class="fas fa-radiation-alt"></i>
+          <span>探索半径：<strong>500 km</strong></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="app-main">
+      <div class="sidebar-left">
+        <section class="control-panel">
+          <h2><i class="fas fa-sliders-h"></i> 控制面板</h2>
+          <div class="control-group">
+            <button id="randomCityBtn" class="btn-primary">
+              <i class="fas fa-random"></i> 随机选择城市
+            </button>
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="citySearch" placeholder="搜索城市名称...">
+            </div>
+            <button id="addCityBtn" class="btn-secondary">
+              <i class="fas fa-plus-circle"></i> 手动添加城市
+            </button>
+          </div>
+        </section>
+
+        <section class="city-list">
+          <h2><i class="fas fa-city"></i> 城市列表</h2>
+          <div class="filter-controls">
+            <span>显示 <span id="cityCount">0</span> 个城市</span>
+            <select id="sortBy">
+              <option value="distance">按距离排序</option>
+              <option value="name">按名称排序</option>
+              <option value="population">按人口排序</option>
+            </select>
+          </div>
+          <div class="city-list-container" id="cityList">
+            <!-- 城市列表动态生成 -->
+          </div>
+        </section>
+      </div>
+
+      <div class="visualization-area">
+        <div class="viz-header">
+          <h2><i class="fas fa-network-wired"></i> 城市网络图</h2>
+          <div class="viz-controls">
+            <button id="zoomInBtn" class="btn-icon"><i class="fas fa-search-plus"></i></button>
+            <button id="zoomOutBtn" class="btn-icon"><i class="fas fa-search-minus"></i></button>
+            <button id="resetViewBtn" class="btn-icon"><i class="fas fa-sync-alt"></i></button>
+            <div class="legend">
+              <span class="legend-item"><span class="legend-color distance-far"></span> 远距离</span>
+              <span class="legend-item"><span class="legend-color distance-near"></span> 近距离</span>
+            </div>
+          </div>
+        </div>
+        <div class="viz-container">
+          <div id="networkGraph"></div>
+          <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+              <i class="fas fa-satellite"></i>
+              <span>正在加载城市数据...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-right">
+        <section class="travel-records">
+          <h2><i class="fas fa-passport"></i> 我的旅游记录</h2>
+          <div class="records-controls">
+            <button id="addRecordBtn" class="btn-small">
+              <i class="fas fa-plus"></i> 新增记录
+            </button>
+            <button id="clearRecordsBtn" class="btn-small btn-danger">
+              <i class="fas fa-trash"></i> 清空
+            </button>
+          </div>
+          <div class="records-container" id="recordsContainer">
+            <!-- 旅游记录动态生成 -->
+            <div class="empty-state">
+              <i class="fas fa-compass"></i>
+              <p>暂无旅游记录</p>
+              <p class="empty-hint">点击"随机选择城市"开始探索</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="selected-city-info" id="selectedCityInfo" style="display: none;">
+          <h2><i class="fas fa-map-pin"></i> 选中城市</h2>
+          <div class="city-details">
+            <h3 id="selectedCityName">城市名称</h3>
+            <div class="city-stats">
+              <div class="stat">
+                <span class="stat-label">距离</span>
+                <span class="stat-value" id="selectedCityDistance">0 km</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">方位角</span>
+                <span class="stat-value" id="selectedCityBearing">0°</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">人口</span>
+                <span class="stat-value" id="selectedCityPopulation">0</span>
+              </div>
+            </div>
+            <p class="city-description" id="selectedCityDescription">城市描述...</p>
+            <div class="action-buttons">
+              <button id="confirmCityBtn" class="btn-success">
+                <i class="fas fa-check-circle"></i> 确定到访
+              </button>
+              <button id="cancelCityBtn" class="btn-secondary">
+                <i class="fas fa-times-circle"></i> 取消
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- 底部状态栏 -->
+    <footer class="app-footer">
+      <div class="status-info">
+        <span id="statusMessage">系统就绪</span>
+        <span class="storage-info">
+          <i class="fas fa-database"></i>
+          <span id="storageUsage">本地存储: 0 KB</span>
+        </span>
+      </div>
+      <div class="footer-links">
+        <a href="#" id="exportDataBtn"><i class="fas fa-download"></i> 导出数据</a>
+        <a href="#" id="importDataBtn"><i class="fas fa-upload"></i> 导入数据</a>
+        <a href="#" id="helpBtn"><i class="fas fa-question-circle"></i> 帮助</a>
+      </div>
+    </footer>
+
+    <!-- 模态框容器 -->
+    <div id="modalContainer"></div>
+  </div>
+
+</body>
+</html>
