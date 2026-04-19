@@ -1156,7 +1156,7 @@ const UIManager = {
       alert(`要启用GitHub登录，您需要：
       
 1. 访问 https://github.com/settings/applications/new 创建OAuth App
-2. 应用名称：TravelNet
+2. 应用名称：TravelNet（或自定义名称如USTBtravelNet）
 3. 主页URL：https://xinyvpeng.github.io/USTB_travelNet/
 4. 授权回调URL：https://xinyvpeng.github.io/USTB_travelNet/
 5. 创建后复制Client ID
