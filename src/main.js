@@ -141,8 +141,11 @@ const DataManager = {
   // 加载城市数据
   async loadCitiesData() {
     try {
-      // 这里暂时使用模拟数据，稍后替换为实际数据
-      const response = await fetch('./data/cities.json');
+      // 使用基于base URL的路径，确保在GitHub Pages上正常工作
+      const baseUrl = import.meta.env.BASE_URL || './';
+      const citiesUrl = `${baseUrl}data/cities.json`.replace(/\/\//g, '/');
+      
+      const response = await fetch(citiesUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
