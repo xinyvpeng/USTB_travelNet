@@ -4,6 +4,15 @@ node_modules/
 # Build output
 # dist/  # Uncomment if you don't want to commit built files
 
+# Project planning and documentation files (not needed in repository)
+task_plan.md
+findings.md
+progress.md
+plan.md
+*.plan.md
+*.findings.md
+*.progress.md
+
 # Environment variables
 .env
 .env.local

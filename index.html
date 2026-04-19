@@ -184,23 +184,23 @@
             此项目为个人旅行探索系统。匿名用户可以查看所有内容，但只有认证用户才能进行编辑操作。
             如需编辑功能，请输入认证密码。
           </p>
-          <div class="auth-form">
-            <div class="form-group">
-              <label for="loginPassword"><i class="fas fa-key"></i> 认证密码</label>
-              <input type="password" id="loginPassword" placeholder="请输入认证密码" autocomplete="current-password">
-              <div class="form-hint">
-                提示：密码已通过环境变量配置
-              </div>
-            </div>
-            <div class="form-actions">
-              <button id="loginSubmitBtn" class="btn-primary">
-                <i class="fas fa-sign-in-alt"></i> 登录
-              </button>
-              <button id="loginCancelBtn" class="btn-secondary">
-                取消
-              </button>
-            </div>
-          </div>
+           <form id="loginForm" class="auth-form">
+             <div class="form-group">
+               <label for="loginPassword"><i class="fas fa-key"></i> 认证密码</label>
+               <input type="password" id="loginPassword" placeholder="请输入认证密码" autocomplete="current-password" required>
+               <div class="form-hint">
+                 提示：密码已通过环境变量配置
+               </div>
+             </div>
+             <div class="form-actions">
+               <button type="submit" id="loginSubmitBtn" class="btn-primary">
+                 <i class="fas fa-sign-in-alt"></i> 登录
+               </button>
+               <button type="button" id="loginCancelBtn" class="btn-secondary">
+                 取消
+               </button>
+             </div>
+           </form>
           <div class="auth-info-note">
             <p><i class="fas fa-info-circle"></i> 此项目为开源项目，其他人可以克隆到自己的仓库进行修改和使用。</p>
           </div>

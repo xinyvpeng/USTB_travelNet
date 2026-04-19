@@ -440,9 +440,15 @@ const UIManager = {
     }
     
     // 登录模态框关闭按钮
-    const loginCloseBtn = document.getElementById('loginCloseBtn');
-    if (loginCloseBtn) {
-      loginCloseBtn.addEventListener('click', () => this.hideLoginModal());
+    const loginModalClose = document.getElementById('loginModalClose');
+    if (loginModalClose) {
+      loginModalClose.addEventListener('click', () => this.hideLoginModal());
+    }
+    
+    // 登录取消按钮
+    const loginCancelBtn = document.getElementById('loginCancelBtn');
+    if (loginCancelBtn) {
+      loginCancelBtn.addEventListener('click', () => this.hideLoginModal());
     }
     
     // 点击模态框外部关闭
@@ -452,6 +458,46 @@ const UIManager = {
         if (e.target === loginModal) {
           this.hideLoginModal();
         }
+      });
+    }
+    
+    // 其他功能按钮
+    const addCityBtn = document.getElementById('addCityBtn');
+    if (addCityBtn) {
+      addCityBtn.addEventListener('click', () => this.handleAddCity());
+    }
+    
+    const addRecordBtn = document.getElementById('addRecordBtn');
+    if (addRecordBtn) {
+      addRecordBtn.addEventListener('click', () => this.handleAddRecord());
+    }
+    
+    const clearRecordsBtn = document.getElementById('clearRecordsBtn');
+    if (clearRecordsBtn) {
+      clearRecordsBtn.addEventListener('click', () => this.handleClearRecords());
+    }
+    
+    const exportDataBtn = document.getElementById('exportDataBtn');
+    if (exportDataBtn) {
+      exportDataBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleExportData();
+      });
+    }
+    
+    const importDataBtn = document.getElementById('importDataBtn');
+    if (importDataBtn) {
+      importDataBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleImportData();
+      });
+    }
+    
+    const helpBtn = document.getElementById('helpBtn');
+    if (helpBtn) {
+      helpBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleHelp();
       });
     }
     
@@ -858,6 +904,135 @@ const UIManager = {
       this.updateAuthUI();
       this.showNotification('已退出登录', 'info');
     }
+  },
+
+  // ===== 其他功能方法 =====
+  
+  // 处理添加城市
+  handleAddCity() {
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
+    
+    this.showNotification('添加城市功能开发中...', 'info');
+  },
+  
+  // 处理添加记录
+  handleAddRecord() {
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
+    
+    this.showNotification('添加记录功能开发中...', 'info');
+  },
+  
+  // 处理清除记录
+  handleClearRecords() {
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
+    
+    if (confirm('确定要清除所有旅行记录吗？此操作不可撤销。')) {
+      AppState.travelRecords = [];
+      AppState.visitedCities.clear();
+      DataManager.saveUserData();
+      this.updateTravelRecords();
+      this.showNotification('所有记录已清除', 'success');
+    }
+  },
+  
+  // 处理导出数据
+  handleExportData() {
+    const data = {
+      visitedCities: Array.from(AppState.visitedCities),
+      travelRecords: AppState.travelRecords,
+      excludedCities: Array.from(AppState.excludedCities),
+      exportDate: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const url = URL.createObjectURL(dataBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `travelnet_data_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    this.showNotification('数据导出成功', 'success');
+  },
+  
+  // 处理导入数据
+  handleImportData() {
+    // 认证检查：只有已登录用户才能执行此操作
+    if (!AppState.isAuthenticated) {
+      this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
+      this.showLoginModal();
+      return;
+    }
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        // 验证数据格式
+        if (!data.visitedCities || !data.travelRecords) {
+          throw new Error('无效的数据格式');
+        }
+        
+        // 确认覆盖
+        if (!confirm('导入数据将覆盖当前所有旅行记录。确定要继续吗？')) {
+          return;
+        }
+        
+        AppState.visitedCities = new Set(data.visitedCities || []);
+        AppState.travelRecords = data.travelRecords || [];
+        AppState.excludedCities = new Set(data.excludedCities || []);
+        
+        await DataManager.saveUserData();
+        this.updateTravelRecords();
+        this.showNotification('数据导入成功', 'success');
+      } catch (error) {
+        console.error('导入数据失败:', error);
+        this.showNotification('导入失败：文件格式无效', 'danger');
+      }
+    };
+    
+    input.click();
+  },
+  
+  // 处理帮助
+  handleHelp() {
+    alert(`TravelNet 使用帮助：
+    
+1. 查看模式：所有用户都可以查看城市网络和旅行记录
+2. 编辑模式：只有认证用户（项目所有者）可以添加城市、编辑记录等
+3. 随机选择：点击"随机选择"按钮选择一个未访问的城市
+4. 确认访问：选中城市后点击"确认访问"添加到旅行记录
+5. 数据管理：支持导出/导入JSON格式的数据
+
+项目地址：https://github.com/xinyvpeng/USTB_travelNet
+`);
   },
 
   // 更新认证UI状态
