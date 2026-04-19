@@ -12,14 +12,7 @@ const CONFIG = {
   // 认证配置 - 密码必须通过环境变量 VITE_AUTH_PASSWORD 设置
   auth: {
     password: import.meta.env.VITE_AUTH_PASSWORD, // 必须通过环境变量设置
-    storageKey: 'travelnet_auth_token',
-    
-    // GitHub OAuth 配置 (可选)
-    github: {
-      clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '', // 通过环境变量设置
-      allowedUsers: ['xinyvpeng'], // 允许编辑的GitHub用户名
-      scope: 'read:user'
-    }
+    storageKey: 'travelnet_auth_token'
   },
   
   // 存储配置
@@ -317,21 +310,12 @@ const AuthManager = {
     if (token && this.validateToken(token)) {
       AppState.authToken = token;
       AppState.isAuthenticated = true;
-      
-      // 检查是否为GitHub登录
-      const githubUsername = localStorage.getItem('github_username');
-      if (githubUsername) {
-        AppState.authUsername = `GitHub: ${githubUsername}`;
-      } else {
-        AppState.authUsername = '项目所有者';
-      }
+      AppState.authUsername = '项目所有者';
       
       console.log('认证状态已恢复');
     } else {
-      // 清除无效令牌和相关数据
+      // 清除无效令牌
       localStorage.removeItem(CONFIG.auth.storageKey);
-      localStorage.removeItem('github_username');
-      localStorage.removeItem('github_access_token');
       AppState.authToken = null;
       AppState.isAuthenticated = false;
       AppState.authUsername = '未登录用户';
@@ -377,10 +361,8 @@ const AuthManager = {
 
   // 登出
   logout() {
-    // 清除令牌和GitHub相关数据
+    // 清除令牌
     localStorage.removeItem(CONFIG.auth.storageKey);
-    localStorage.removeItem('github_username');
-    localStorage.removeItem('github_access_token');
     
     // 更新应用状态
     AppState.authToken = null;
@@ -529,17 +511,8 @@ const UIManager = {
       });
     }
     
-    // GitHub登录按钮
-    const githubLoginBtn = document.getElementById('githubLoginBtn');
-    if (githubLoginBtn) {
-      githubLoginBtn.addEventListener('click', () => this.handleGitHubLogin());
-    }
-    
-    // 根据配置显示/隐藏GitHub认证部分
-    const githubAuthSection = document.getElementById('githubAuthSection');
-    if (githubAuthSection && CONFIG.auth.github) {
-      githubAuthSection.style.display = 'block';
-    }
+    // GitHub登录功能已移除（安全限制）
+    // 如需GitHub OAuth认证，需要添加后端代理服务
     
     // 编辑记录模态框事件
     const editRecordModalClose = document.getElementById('editRecordModalClose');
@@ -1149,67 +1122,8 @@ const UIManager = {
 `);
   },
 
-  // 处理GitHub登录（简化版：使用GitHub API验证用户名）
-  async handleGitHubLogin() {
-    if (!CONFIG.auth.github || !CONFIG.auth.github.allowedUsers) {
-      this.showNotification('GitHub登录配置不完整。', 'warning');
-      return;
-    }
-    
-    // 显示GitHub用户名输入提示
-    const username = prompt('请输入您的GitHub用户名：');
-    if (!username || !username.trim()) {
-      this.showNotification('GitHub登录已取消', 'info');
-      return;
-    }
-    
-    // 显示加载状态
-    this.showNotification('正在验证GitHub用户...', 'info');
-    
-    try {
-      // 通过GitHub API验证用户是否存在
-      const response = await fetch(`https://api.github.com/users/${username}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          this.showNotification('GitHub用户不存在，请检查用户名', 'danger');
-        } else {
-          this.showNotification('GitHub API请求失败', 'danger');
-        }
-        return;
-      }
-      
-      const userData = await response.json();
-      const githubUsername = userData.login;
-      
-      // 检查用户是否在允许列表中
-      if (!CONFIG.auth.github.allowedUsers.includes(githubUsername)) {
-        this.showNotification(`用户 ${githubUsername} 无权编辑此项目。仅允许项目所有者编辑。`, 'danger');
-        return;
-      }
-      
-      // 认证成功 - 生成令牌
-      const token = `github_auth_${Date.now()}_${Math.random().toString(36).substr(2)}`;
-      
-      // 存储令牌和用户信息
-      localStorage.setItem(CONFIG.auth.storageKey, token);
-      localStorage.setItem('github_username', githubUsername);
-      
-      // 更新应用状态
-      AppState.authToken = token;
-      AppState.isAuthenticated = true;
-      AppState.authUsername = `GitHub: ${githubUsername}`;
-      
-      // 更新UI
-      this.updateAuthUI();
-      this.hideLoginModal();
-      this.showNotification(`GitHub登录成功！欢迎 ${githubUsername}`, 'success');
-      
-    } catch (error) {
-      console.error('GitHub登录失败:', error);
-      this.showNotification('GitHub登录失败，请检查网络连接', 'danger');
-    }
-  },
+   // GitHub登录功能已移除，因为纯前端实现存在安全限制
+  // 如需GitHub OAuth认证，需要添加后端代理服务
 
   // 更新认证UI状态
   updateAuthUI() {
