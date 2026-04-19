@@ -9,10 +9,9 @@ const CONFIG = {
   radiusKm: 500,            // 探索半径（公里）
   earthRadiusKm: 6371,      // 地球半径（公里）
   
-  // 认证配置 - 密码通过环境变量设置，生产环境中应替换
+  // 认证配置 - 密码必须通过环境变量 VITE_AUTH_PASSWORD 设置
   auth: {
-    // 优先级：环境变量 VITE_AUTH_PASSWORD > 默认值
-    password: import.meta.env.VITE_AUTH_PASSWORD || 'TravelNet2024!',
+    password: import.meta.env.VITE_AUTH_PASSWORD, // 必须通过环境变量设置
     storageKey: 'travelnet_auth_token',
     
     // GitHub OAuth 配置 (可选)
@@ -337,6 +336,15 @@ const AuthManager = {
 
   // 登录
   login(password) {
+    // 检查密码是否已配置
+    if (!CONFIG.auth.password) {
+      console.error('认证密码未配置：请设置环境变量 VITE_AUTH_PASSWORD');
+      return { 
+        success: false, 
+        message: '系统配置错误：认证密码未配置。请检查环境变量设置。' 
+      };
+    }
+    
     if (password === CONFIG.auth.password) {
       // 生成简单令牌（时间戳 + 随机数）
       const token = `travelnet_auth_${Date.now()}_${Math.random().toString(36).substr(2)}`;
