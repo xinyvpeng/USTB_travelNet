@@ -11,7 +11,8 @@ const CONFIG = {
   
   // 认证配置 - 密码通过环境变量设置，生产环境中应替换
   auth: {
-    password: 'TravelNet2024!', // 默认密码，在实际部署时应通过环境变量设置
+    // 优先级：环境变量 VITE_AUTH_PASSWORD > 默认值
+    password: import.meta.env.VITE_AUTH_PASSWORD || 'TravelNet2024!',
     storageKey: 'travelnet_auth_token',
     
     // GitHub OAuth 配置 (可选)
