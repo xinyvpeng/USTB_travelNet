@@ -224,6 +224,65 @@
       </div>
     </div>
 
+    <!-- 编辑记录模态框 -->
+    <div id="editRecordModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-edit"></i> 编辑旅行记录</h2>
+          <button class="modal-close" id="editRecordModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="editRecordForm" class="edit-record-form">
+            <div class="form-group">
+              <label for="editRecordCityName"><i class="fas fa-city"></i> 城市名称</label>
+              <input type="text" id="editRecordCityName" readonly class="readonly-input">
+            </div>
+            
+            <div class="form-group">
+              <label for="editRecordVisitDate"><i class="fas fa-calendar-alt"></i> 到访日期</label>
+              <input type="date" id="editRecordVisitDate" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="editRecordThoughts"><i class="fas fa-comment-dots"></i> 旅行感想</label>
+              <textarea id="editRecordThoughts" rows="4" placeholder="记录您的旅行体验、感受或建议..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label><i class="fas fa-images"></i> 照片管理</label>
+              <div class="photos-management">
+                <div id="editRecordPhotosList" class="photos-list">
+                  <!-- 照片列表动态生成 -->
+                  <div class="empty-photos">
+                    <i class="fas fa-camera"></i>
+                    <span>暂无照片</span>
+                  </div>
+                </div>
+                <div class="photos-actions">
+                  <button type="button" id="addPhotoBtn" class="btn-small">
+                    <i class="fas fa-plus"></i> 添加照片URL
+                  </button>
+                  <input type="file" id="photoUploadInput" accept="image/*" style="display: none;">
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" id="editRecordSaveBtn" class="btn-primary">
+                <i class="fas fa-save"></i> 保存更改
+              </button>
+              <button type="button" id="editRecordCancelBtn" class="btn-secondary">
+                取消
+              </button>
+              <button type="button" id="editRecordDeleteBtn" class="btn-danger" style="margin-left: auto;">
+                <i class="fas fa-trash"></i> 删除记录
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- 模态框容器 -->
     <div id="modalContainer"></div>
   </div>

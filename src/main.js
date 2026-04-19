@@ -317,11 +317,20 @@ const AuthManager = {
     if (token && this.validateToken(token)) {
       AppState.authToken = token;
       AppState.isAuthenticated = true;
-      AppState.authUsername = '项目所有者';
+      
+      // 检查是否为GitHub登录
+      const githubUsername = localStorage.getItem('github_username');
+      if (githubUsername) {
+        AppState.authUsername = `GitHub: ${githubUsername}`;
+      } else {
+        AppState.authUsername = '项目所有者';
+      }
+      
       console.log('认证状态已恢复');
     } else {
-      // 清除无效令牌
+      // 清除无效令牌和相关数据
       localStorage.removeItem(CONFIG.auth.storageKey);
+      localStorage.removeItem('github_username');
       AppState.authToken = null;
       AppState.isAuthenticated = false;
       AppState.authUsername = '未登录用户';
@@ -367,8 +376,9 @@ const AuthManager = {
 
   // 登出
   logout() {
-    // 清除令牌
+    // 清除令牌和GitHub用户名
     localStorage.removeItem(CONFIG.auth.storageKey);
+    localStorage.removeItem('github_username');
     
     // 更新应用状态
     AppState.authToken = null;
@@ -525,8 +535,39 @@ const UIManager = {
     
     // 根据配置显示/隐藏GitHub认证部分
     const githubAuthSection = document.getElementById('githubAuthSection');
-    if (githubAuthSection && CONFIG.auth.github && CONFIG.auth.github.clientId) {
+    if (githubAuthSection && CONFIG.auth.github) {
       githubAuthSection.style.display = 'block';
+    }
+    
+    // 编辑记录模态框事件
+    const editRecordModalClose = document.getElementById('editRecordModalClose');
+    if (editRecordModalClose) {
+      editRecordModalClose.addEventListener('click', () => this.hideEditRecordModal());
+    }
+    
+    const editRecordCancelBtn = document.getElementById('editRecordCancelBtn');
+    if (editRecordCancelBtn) {
+      editRecordCancelBtn.addEventListener('click', () => this.hideEditRecordModal());
+    }
+    
+    const editRecordForm = document.getElementById('editRecordForm');
+    if (editRecordForm) {
+      editRecordForm.addEventListener('submit', (e) => this.handleEditRecordSave(e));
+    }
+    
+    const editRecordDeleteBtn = document.getElementById('editRecordDeleteBtn');
+    if (editRecordDeleteBtn) {
+      editRecordDeleteBtn.addEventListener('click', () => this.handleEditRecordDelete());
+    }
+    
+    // 点击模态框外部关闭
+    const editRecordModal = document.getElementById('editRecordModal');
+    if (editRecordModal) {
+      editRecordModal.addEventListener('click', (e) => {
+        if (e.target === editRecordModal) {
+          this.hideEditRecordModal();
+        }
+      });
     }
     
     console.log('UI事件初始化完成');
@@ -846,7 +887,7 @@ const UIManager = {
     }, 3000);
   },
 
-  // 编辑记录（待实现）
+  // 编辑记录
   editRecord(recordId) {
     // 认证检查：只有已登录用户才能执行此操作
     if (!AppState.isAuthenticated) {
@@ -855,12 +896,25 @@ const UIManager = {
       return;
     }
     
-    console.log('编辑记录:', recordId);
-    this.showNotification('编辑功能开发中...', 'info');
+    // 查找记录
+    const record = AppState.travelRecords.find(r => r.id === recordId);
+    if (!record) {
+      this.showNotification('未找到指定的旅行记录', 'danger');
+      return;
+    }
+    
+    // 存储当前编辑的记录ID
+    this.currentEditingRecordId = recordId;
+    
+    // 填充编辑表单
+    this.populateEditRecordForm(record);
+    
+    // 显示编辑模态框
+    this.showEditRecordModal();
   },
 
-  // 删除记录（待实现）
-  deleteRecord(recordId) {
+  // 删除记录
+  async deleteRecord(recordId) {
     // 认证检查：只有已登录用户才能执行此操作
     if (!AppState.isAuthenticated) {
       this.showNotification('此操作需要登录。请先登录以编辑内容。', 'warning');
@@ -868,8 +922,38 @@ const UIManager = {
       return;
     }
     
-    console.log('删除记录:', recordId);
-    this.showNotification('删除功能开发中...', 'info');
+    // 查找记录
+    const recordIndex = AppState.travelRecords.findIndex(r => r.id === recordId);
+    if (recordIndex === -1) {
+      this.showNotification('未找到要删除的记录', 'danger');
+      return;
+    }
+    
+    // 确认删除
+    const record = AppState.travelRecords[recordIndex];
+    const cityName = record.cityName;
+    
+    if (!confirm(`确定要删除 ${cityName} 的旅行记录吗？此操作不可撤销。`)) {
+      return;
+    }
+    
+    try {
+      // 从已访问城市中移除
+      AppState.visitedCities.delete(record.cityId);
+      
+      // 从旅游记录中移除
+      AppState.travelRecords.splice(recordIndex, 1);
+      
+      // 保存数据
+      await DataManager.saveUserData();
+      
+      // 更新UI
+      this.updateTravelRecords();
+      this.showNotification(`已删除 ${cityName} 的旅行记录`, 'success');
+    } catch (error) {
+      console.error('删除记录失败:', error);
+      this.showNotification('删除记录时发生错误', 'danger');
+    }
   },
 
   // ===== 认证相关方法 =====
@@ -1064,24 +1148,65 @@ const UIManager = {
   },
 
   // 处理GitHub登录
-  handleGitHubLogin() {
-    if (!CONFIG.auth.github || !CONFIG.auth.github.clientId) {
-      this.showNotification('GitHub登录未配置。请先配置GitHub OAuth应用。', 'warning');
-      alert(`要启用GitHub登录，您需要：
-      
-1. 访问 https://github.com/settings/applications/new 创建OAuth App
-2. 应用名称：TravelNet
-3. 主页URL：https://xinyvpeng.github.io/USTB_travelNet/
-4. 授权回调URL：https://xinyvpeng.github.io/USTB_travelNet/
-5. 创建后复制Client ID
-6. 在项目环境变量中设置 VITE_GITHUB_CLIENT_ID
-
-或者，您可以使用当前的密码认证。`);
+  async handleGitHubLogin() {
+    if (!CONFIG.auth.github || !CONFIG.auth.github.allowedUsers) {
+      this.showNotification('GitHub登录配置不完整。', 'warning');
       return;
     }
     
-    this.showNotification('GitHub登录功能开发中...', 'info');
-    // TODO: 实现GitHub Device Flow认证
+    // 显示GitHub用户名输入提示
+    const username = prompt('请输入您的GitHub用户名：');
+    if (!username || !username.trim()) {
+      this.showNotification('GitHub登录已取消', 'info');
+      return;
+    }
+    
+    // 显示加载状态
+    this.showNotification('正在验证GitHub用户...', 'info');
+    
+    try {
+      // 通过GitHub API验证用户是否存在
+      const response = await fetch(`https://api.github.com/users/${username}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          this.showNotification('GitHub用户不存在，请检查用户名', 'danger');
+        } else {
+          this.showNotification('GitHub API请求失败', 'danger');
+        }
+        return;
+      }
+      
+      const userData = await response.json();
+      const githubUsername = userData.login;
+      
+      // 检查用户是否在允许列表中
+      if (!CONFIG.auth.github.allowedUsers.includes(githubUsername)) {
+        this.showNotification(`用户 ${githubUsername} 无权编辑此项目。仅允许项目所有者编辑。`, 'danger');
+        return;
+      }
+      
+      // 认证成功 - 生成令牌
+      const token = `github_auth_${Date.now()}_${Math.random().toString(36).substr(2)}`;
+      
+      // 存储令牌和用户信息
+      localStorage.setItem(CONFIG.auth.storageKey, token);
+      localStorage.setItem('github_username', githubUsername);
+      
+      // 更新应用状态
+      AppState.authToken = token;
+      AppState.isAuthenticated = true;
+      AppState.authUsername = `GitHub: ${githubUsername}`;
+      
+      // 更新UI
+      this.updateAuthUI();
+      this.hideLoginModal();
+      this.showNotification(`GitHub登录成功！欢迎 ${githubUsername}`, 'success');
+      
+    } catch (error) {
+      console.error('GitHub登录失败:', error);
+      this.showNotification('GitHub登录失败，请检查网络连接', 'danger');
+    }
   },
 
   // 更新认证UI状态
@@ -1110,6 +1235,185 @@ const UIManager = {
       if (logoutBtn) logoutBtn.style.display = 'none';
       if (appContainer) appContainer.classList.add('read-only');
     }
+  },
+
+  // 填充编辑记录表单
+  populateEditRecordForm(record) {
+    const city = AppState.cities.find(c => c.id === record.cityId);
+    const cityName = city ? city.name : record.cityName;
+    
+    // 填充表单字段
+    const cityNameInput = document.getElementById('editRecordCityName');
+    const visitDateInput = document.getElementById('editRecordVisitDate');
+    const thoughtsInput = document.getElementById('editRecordThoughts');
+    
+    if (cityNameInput) cityNameInput.value = cityName;
+    if (visitDateInput) visitDateInput.value = record.visitDate || new Date().toISOString().split('T')[0];
+    if (thoughtsInput) thoughtsInput.value = record.thoughts || '';
+    
+    // 填充照片列表
+    this.updatePhotoList(record.photos || []);
+  },
+
+  // 更新照片列表显示
+  updatePhotoList(photos) {
+    const photosList = document.getElementById('editRecordPhotosList');
+    if (!photosList) return;
+    
+    if (!photos || photos.length === 0) {
+      photosList.innerHTML = `
+        <div class="empty-photos">
+          <i class="fas fa-camera"></i>
+          <span>暂无照片</span>
+        </div>
+      `;
+      return;
+    }
+    
+    let photosHTML = '';
+    photos.forEach((photo, index) => {
+      photosHTML += `
+        <div class="photo-item" data-index="${index}">
+          <img src="${photo}" alt="旅行照片 ${index + 1}" onerror="this.style.display='none'">
+          <div class="photo-actions">
+            <button class="btn-small btn-view-photo" data-url="${photo}">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-small btn-remove-photo" data-index="${index}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    
+    photosList.innerHTML = photosHTML;
+    
+    // 添加照片按钮事件
+    const viewButtons = photosList.querySelectorAll('.btn-view-photo');
+    const removeButtons = photosList.querySelectorAll('.btn-remove-photo');
+    
+    viewButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const url = e.target.closest('button').dataset.url;
+        window.open(url, '_blank');
+      });
+    });
+    
+    removeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.target.closest('button').dataset.index);
+        this.removePhotoFromRecord(index);
+      });
+    });
+  },
+
+  // 从记录中移除照片
+  removePhotoFromRecord(photoIndex) {
+    const recordId = this.currentEditingRecordId;
+    const record = AppState.travelRecords.find(r => r.id === recordId);
+    
+    if (!record) return;
+    
+    if (!record.photos) record.photos = [];
+    record.photos.splice(photoIndex, 1);
+    
+    // 更新照片列表显示
+    this.updatePhotoList(record.photos);
+  },
+
+  // 显示编辑记录模态框
+  showEditRecordModal() {
+    const modal = document.getElementById('editRecordModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      
+      // 添加照片按钮事件
+      const addPhotoBtn = document.getElementById('addPhotoBtn');
+      if (addPhotoBtn) {
+        addPhotoBtn.addEventListener('click', () => this.handleAddPhoto());
+      }
+    }
+  },
+
+  // 隐藏编辑记录模态框
+  hideEditRecordModal() {
+    const modal = document.getElementById('editRecordModal');
+    if (modal) {
+      modal.style.display = 'none';
+      this.currentEditingRecordId = null;
+    }
+  },
+
+  // 处理添加照片
+  handleAddPhoto() {
+    const url = prompt('请输入照片URL地址:');
+    if (!url) return;
+    
+    // 简单的URL验证
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      this.showNotification('请输入有效的URL地址 (以 http:// 或 https:// 开头)', 'warning');
+      return;
+    }
+    
+    const recordId = this.currentEditingRecordId;
+    const record = AppState.travelRecords.find(r => r.id === recordId);
+    
+    if (!record) return;
+    
+    if (!record.photos) record.photos = [];
+    record.photos.push(url);
+    
+    this.updatePhotoList(record.photos);
+    this.showNotification('照片已添加', 'success');
+  },
+
+  // 处理编辑记录保存
+  async handleEditRecordSave(event) {
+    event.preventDefault();
+    
+    const recordId = this.currentEditingRecordId;
+    if (!recordId) return;
+    
+    const record = AppState.travelRecords.find(r => r.id === recordId);
+    if (!record) {
+      this.showNotification('未找到要编辑的记录', 'danger');
+      return;
+    }
+    
+    // 获取表单数据
+    const visitDateInput = document.getElementById('editRecordVisitDate');
+    const thoughtsInput = document.getElementById('editRecordThoughts');
+    
+    if (!visitDateInput || !thoughtsInput) {
+      this.showNotification('表单字段加载失败', 'danger');
+      return;
+    }
+    
+    // 更新记录
+    record.visitDate = visitDateInput.value;
+    record.thoughts = thoughtsInput.value;
+    
+    // 保存数据
+    await DataManager.saveUserData();
+    
+    // 更新UI
+    this.updateTravelRecords();
+    this.hideEditRecordModal();
+    this.showNotification('旅行记录已更新', 'success');
+  },
+
+  // 处理编辑记录删除
+  async handleEditRecordDelete() {
+    if (!this.currentEditingRecordId) return;
+    
+    if (!confirm('确定要删除这条旅行记录吗？此操作不可撤销。')) {
+      return;
+    }
+    
+    // 调用删除方法
+    await this.deleteRecord(this.currentEditingRecordId);
+    this.hideEditRecordModal();
   }
 };
 
