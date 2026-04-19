@@ -331,6 +331,7 @@ const AuthManager = {
       // 清除无效令牌和相关数据
       localStorage.removeItem(CONFIG.auth.storageKey);
       localStorage.removeItem('github_username');
+      localStorage.removeItem('github_access_token');
       AppState.authToken = null;
       AppState.isAuthenticated = false;
       AppState.authUsername = '未登录用户';
@@ -376,9 +377,10 @@ const AuthManager = {
 
   // 登出
   logout() {
-    // 清除令牌和GitHub用户名
+    // 清除令牌和GitHub相关数据
     localStorage.removeItem(CONFIG.auth.storageKey);
     localStorage.removeItem('github_username');
+    localStorage.removeItem('github_access_token');
     
     // 更新应用状态
     AppState.authToken = null;
@@ -1149,49 +1151,100 @@ const UIManager = {
 
   // 处理GitHub登录
   async handleGitHubLogin() {
-    if (!CONFIG.auth.github || !CONFIG.auth.github.allowedUsers) {
-      this.showNotification('GitHub登录配置不完整。', 'warning');
+    if (!CONFIG.auth.github || !CONFIG.auth.github.clientId) {
+      this.showNotification('GitHub登录未配置。请先配置GitHub OAuth应用。', 'warning');
+      alert(`要启用GitHub登录，您需要：
+      
+1. 访问 https://github.com/settings/applications/new 创建OAuth App
+2. 应用名称：TravelNet
+3. 主页URL：https://xinyvpeng.github.io/USTB_travelNet/
+4. 授权回调URL：https://xinyvpeng.github.io/USTB_travelNet/
+5. 创建后复制Client ID
+6. 在项目环境变量中设置 VITE_GITHUB_CLIENT_ID
+
+或者，您可以使用当前的密码认证。`);
       return;
     }
-    
-    // 显示GitHub用户名输入提示
-    const username = prompt('请输入您的GitHub用户名：');
-    if (!username || !username.trim()) {
-      this.showNotification('GitHub登录已取消', 'info');
-      return;
-    }
-    
-    // 显示加载状态
-    this.showNotification('正在验证GitHub用户...', 'info');
     
     try {
-      // 通过GitHub API验证用户是否存在
-      const response = await fetch(`https://api.github.com/users/${username}`);
+      // 显示加载状态
+      this.showNotification('正在启动GitHub认证流程...', 'info');
       
-      if (!response.ok) {
-        if (response.status === 404) {
-          this.showNotification('GitHub用户不存在，请检查用户名', 'danger');
-        } else {
-          this.showNotification('GitHub API请求失败', 'danger');
-        }
+      // 1. 发起Device Flow请求
+      const deviceCodeResponse = await fetch('https://github.com/login/device/code', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: CONFIG.auth.github.clientId,
+          scope: CONFIG.auth.github.scope || 'read:user'
+        })
+      });
+      
+      if (!deviceCodeResponse.ok) {
+        throw new Error('无法获取设备代码');
+      }
+      
+      const deviceData = await deviceCodeResponse.json();
+      const { device_code, user_code, verification_uri, expires_in, interval } = deviceData;
+      
+      // 2. 显示用户验证信息
+      const confirmAuth = confirm(`GitHub认证流程：
+      
+1. 请打开链接: ${verification_uri}
+2. 输入代码: ${user_code}
+3. 点击授权按钮
+
+准备好后点击"确定"继续，或点击"取消"中止认证。`);
+      
+      if (!confirmAuth) {
+        this.showNotification('GitHub登录已取消', 'info');
         return;
       }
       
-      const userData = await response.json();
+      // 在新窗口打开验证页面
+      window.open(verification_uri, '_blank');
+      
+      this.showNotification('请在新窗口中完成GitHub授权...', 'info');
+      
+      // 3. 轮询获取访问令牌
+      const accessToken = await this.pollForAccessToken(device_code, interval || 5);
+      
+      if (!accessToken) {
+        this.showNotification('GitHub授权超时或失败', 'danger');
+        return;
+      }
+      
+      // 4. 获取用户信息
+      const userResponse = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!userResponse.ok) {
+        throw new Error('无法获取用户信息');
+      }
+      
+      const userData = await userResponse.json();
       const githubUsername = userData.login;
       
-      // 检查用户是否在允许列表中
+      // 5. 检查用户是否在允许列表中
       if (!CONFIG.auth.github.allowedUsers.includes(githubUsername)) {
         this.showNotification(`用户 ${githubUsername} 无权编辑此项目。仅允许项目所有者编辑。`, 'danger');
         return;
       }
       
-      // 认证成功 - 生成令牌
-      const token = `github_auth_${Date.now()}_${Math.random().toString(36).substr(2)}`;
+      // 6. 存储认证状态
+      const token = `github_oauth_${Date.now()}_${accessToken.substring(0, 10)}`;
       
       // 存储令牌和用户信息
       localStorage.setItem(CONFIG.auth.storageKey, token);
       localStorage.setItem('github_username', githubUsername);
+      localStorage.setItem('github_access_token', accessToken);
       
       // 更新应用状态
       AppState.authToken = token;
@@ -1201,12 +1254,68 @@ const UIManager = {
       // 更新UI
       this.updateAuthUI();
       this.hideLoginModal();
-      this.showNotification(`GitHub登录成功！欢迎 ${githubUsername}`, 'success');
+      this.showNotification(`GitHub OAuth登录成功！欢迎 ${githubUsername}`, 'success');
       
     } catch (error) {
-      console.error('GitHub登录失败:', error);
-      this.showNotification('GitHub登录失败，请检查网络连接', 'danger');
+      console.error('GitHub OAuth登录失败:', error);
+      this.showNotification(`GitHub登录失败: ${error.message}`, 'danger');
     }
+  },
+
+  // 轮询获取访问令牌
+  async pollForAccessToken(deviceCode, interval) {
+    const maxAttempts = 30; // 大约 30 * 5秒 = 150秒超时
+    const clientId = CONFIG.auth.github.clientId;
+    
+    this.showNotification('等待GitHub授权确认...', 'info');
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, interval * 1000));
+        
+        const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            client_id: clientId,
+            device_code: deviceCode,
+            grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
+          })
+        });
+        
+        if (!tokenResponse.ok) {
+          continue;
+        }
+        
+        const tokenData = await tokenResponse.json();
+        
+        if (tokenData.access_token) {
+          return tokenData.access_token;
+        }
+        
+        if (tokenData.error === 'authorization_pending') {
+          continue;
+        }
+        
+        if (tokenData.error === 'slow_down') {
+          // 如果收到slow_down错误，增加轮询间隔
+          interval = Math.min(interval + 5, 60);
+          continue;
+        }
+        
+        if (tokenData.error === 'expired_token' || tokenData.error === 'access_denied') {
+          throw new Error(`授权失败: ${tokenData.error_description || tokenData.error}`);
+        }
+        
+      } catch (error) {
+        console.error('轮询错误:', error);
+      }
+    }
+    
+    return null;
   },
 
   // 更新认证UI状态
