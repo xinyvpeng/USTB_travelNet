@@ -227,6 +227,29 @@ npm install
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
 
+## 🚀 部署
+
+### GitHub Pages 自动部署
+项目已配置 GitHub Actions 工作流，推送代码到 `master` 分支时自动构建并部署到 GitHub Pages。
+
+**访问地址**：https://xinyvpeng.github.io/USTB_travelNet/
+
+**手动设置**（如果自动部署未生效）：
+1. 访问仓库 Settings → Pages
+2. Source 选择：`master` 分支，`/dist` 文件夹
+3. 点击 Save
+
+**本地开发**：
+```bash
+npm install          # 安装依赖
+npm run dev         # 开发服务器 (http://localhost:5173)
+npm run build       # 构建生产版本
+```
+
+### 部署状态
+![GitHub Pages](https://img.shields.io/github/deployments/xinyvpeng/USTB_travelNet/github-pages?label=GitHub%20Pages)
+![Last Commit](https://img.shields.io/github/last-commit/xinyvpeng/USTB_travelNet)
+
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
