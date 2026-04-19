@@ -1183,8 +1183,10 @@ const UIManager = {
         })
       });
       
-      if (!deviceCodeResponse.ok) {
-        throw new Error('无法获取设备代码');
+       if (!deviceCodeResponse.ok) {
+        const errorText = await deviceCodeResponse.text().catch(() => '无法读取错误信息');
+        console.error('GitHub设备代码请求失败:', deviceCodeResponse.status, errorText);
+        throw new Error(`无法获取设备代码 (HTTP ${deviceCodeResponse.status})`);
       }
       
       const deviceData = await deviceCodeResponse.json();
@@ -1225,8 +1227,10 @@ const UIManager = {
         }
       });
       
-      if (!userResponse.ok) {
-        throw new Error('无法获取用户信息');
+       if (!userResponse.ok) {
+        const errorText = await userResponse.text().catch(() => '无法读取错误信息');
+        console.error('GitHub用户信息请求失败:', userResponse.status, errorText);
+        throw new Error(`无法获取用户信息 (HTTP ${userResponse.status})`);
       }
       
       const userData = await userResponse.json();
@@ -1256,10 +1260,28 @@ const UIManager = {
       this.hideLoginModal();
       this.showNotification(`GitHub OAuth登录成功！欢迎 ${githubUsername}`, 'success');
       
-    } catch (error) {
-      console.error('GitHub OAuth登录失败:', error);
-      this.showNotification(`GitHub登录失败: ${error.message}`, 'danger');
-    }
+     } catch (error) {
+       console.error('GitHub OAuth登录失败:', error);
+       
+       // 提供更具体的错误信息
+       let errorMessage = error.message;
+       
+       // 检查是否是网络/CORS错误
+       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+         errorMessage = '网络请求失败。这可能是由于：1) CORS限制（GitHub API可能不允许从浏览器直接调用），2) 网络连接问题，3) 浏览器安全限制。';
+         
+         // 建议解决方案
+         setTimeout(() => {
+           alert(`GitHub OAuth在纯前端应用中可能遇到CORS限制。建议：
+           
+1. 使用密码认证（通过环境变量设置）
+2. 或考虑添加简单的后端代理来处理GitHub OAuth请求
+3. 或使用简化的用户名验证（输入GitHub用户名即可）`);
+         }, 500);
+       }
+       
+       this.showNotification(`GitHub登录失败: ${errorMessage}`, 'danger');
+     }
   },
 
   // 轮询获取访问令牌
@@ -1286,9 +1308,10 @@ const UIManager = {
           })
         });
         
-        if (!tokenResponse.ok) {
-          continue;
-        }
+         if (!tokenResponse.ok) {
+           console.error('GitHub访问令牌请求失败:', tokenResponse.status);
+           continue;
+         }
         
         const tokenData = await tokenResponse.json();
         
