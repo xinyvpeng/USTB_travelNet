@@ -12,7 +12,14 @@ const CONFIG = {
   // 认证配置 - 密码通过环境变量设置，生产环境中应替换
   auth: {
     password: 'TravelNet2024!', // 默认密码，在实际部署时应通过环境变量设置
-    storageKey: 'travelnet_auth_token'
+    storageKey: 'travelnet_auth_token',
+    
+    // GitHub OAuth 配置 (可选)
+    github: {
+      clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '', // 通过环境变量设置
+      allowedUsers: ['xinyvpeng'], // 允许编辑的GitHub用户名
+      scope: 'read:user'
+    }
   },
   
   // 存储配置
@@ -499,6 +506,18 @@ const UIManager = {
         e.preventDefault();
         this.handleHelp();
       });
+    }
+    
+    // GitHub登录按钮
+    const githubLoginBtn = document.getElementById('githubLoginBtn');
+    if (githubLoginBtn) {
+      githubLoginBtn.addEventListener('click', () => this.handleGitHubLogin());
+    }
+    
+    // 根据配置显示/隐藏GitHub认证部分
+    const githubAuthSection = document.getElementById('githubAuthSection');
+    if (githubAuthSection && CONFIG.auth.github && CONFIG.auth.github.clientId) {
+      githubAuthSection.style.display = 'block';
     }
     
     console.log('UI事件初始化完成');
@@ -1033,6 +1052,27 @@ const UIManager = {
 
 项目地址：https://github.com/xinyvpeng/USTB_travelNet
 `);
+  },
+
+  // 处理GitHub登录
+  handleGitHubLogin() {
+    if (!CONFIG.auth.github || !CONFIG.auth.github.clientId) {
+      this.showNotification('GitHub登录未配置。请先配置GitHub OAuth应用。', 'warning');
+      alert(`要启用GitHub登录，您需要：
+      
+1. 访问 https://github.com/settings/applications/new 创建OAuth App
+2. 应用名称：TravelNet
+3. 主页URL：https://xinyvpeng.github.io/USTB_travelNet/
+4. 授权回调URL：https://xinyvpeng.github.io/USTB_travelNet/
+5. 创建后复制Client ID
+6. 在项目环境变量中设置 VITE_GITHUB_CLIENT_ID
+
+或者，您可以使用当前的密码认证。`);
+      return;
+    }
+    
+    this.showNotification('GitHub登录功能开发中...', 'info');
+    // TODO: 实现GitHub Device Flow认证
   },
 
   // 更新认证UI状态

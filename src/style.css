@@ -884,3 +884,65 @@ button:disabled {
     max-width: 95%;
   }
 }
+
+/* GitHub认证样式 */
+.github-auth-section {
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: var(--space-md) 0;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.auth-divider span {
+  padding: 0 var(--space-sm);
+}
+
+.btn-github {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: #24292e;
+  border: 1px solid #24292e;
+  color: white;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  transition: all 0.2s;
+}
+
+.btn-github:hover {
+  background: #2c343a;
+  border-color: #2c343a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-github:active {
+  transform: translateY(0);
+}
+
+.github-auth-info {
+  margin-top: var(--space-sm);
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  text-align: center;
+}

@@ -200,10 +200,26 @@
                  取消
                </button>
              </div>
-           </form>
-          <div class="auth-info-note">
-            <p><i class="fas fa-info-circle"></i> 此项目为开源项目，其他人可以克隆到自己的仓库进行修改和使用。</p>
-          </div>
+            </form>
+            
+            <!-- GitHub登录选项 (可选) -->
+            <div id="githubAuthSection" class="github-auth-section" style="display: none;">
+              <div class="auth-divider">
+                <span>或</span>
+              </div>
+              <div class="form-actions">
+                <button type="button" id="githubLoginBtn" class="btn-github">
+                  <i class="fab fa-github"></i> 使用GitHub登录
+                </button>
+              </div>
+              <div class="github-auth-info">
+                <p><i class="fas fa-info-circle"></i> GitHub登录需要配置OAuth应用。仅允许项目所有者编辑。</p>
+              </div>
+            </div>
+            
+           <div class="auth-info-note">
+             <p><i class="fas fa-info-circle"></i> 此项目为开源项目，其他人可以克隆到自己的仓库进行修改和使用。</p>
+           </div>
         </div>
       </div>
     </div>
