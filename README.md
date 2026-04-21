@@ -153,14 +153,14 @@ GitHub Actions工作流（`.github/workflows/deploy.yml`）执行以下步骤：
 7. **部署到GitHub Pages**：自动发布到https://xinyvpeng.github.io/USTB_travelNet/
 
 #### 环境变量配置
-**重要**：项目使用环境变量进行身份验证配置：
-- **变量名**：`VITE_AUTH_PASSWORD`
-- **用途**：用于登录认证的密码（已移除默认测试密码"123"）
-- **配置方法**：
+**注意**：项目使用默认密码"123"进行身份验证，任何人都可以使用此密码登录记录自己的旅行数据。
+- **变量名**：`VITE_AUTH_PASSWORD`（可选）
+- **用途**：用于覆盖默认登录认证密码
+- **配置方法（如需自定义密码）**：
   1. 在GitHub仓库中：Settings → Secrets and variables → Actions
   2. 点击"New repository secret"
   3. 名称：`VITE_AUTH_PASSWORD`
-  4. 值：设置您的安全密码
+  4. 值：设置您的自定义密码
   5. 点击"Add secret"
 
 环境变量在构建时自动注入（工作流第42-43行）：
@@ -168,7 +168,7 @@ GitHub Actions工作流（`.github/workflows/deploy.yml`）执行以下步骤：
 - name: Build project
   run: npm run build
   env:
-    VITE_AUTH_PASSWORD: ${{ secrets.VITE_AUTH_PASSWORD }}
+    VITE_AUTH_PASSWORD: "123"  # 公开密码，任何人都可以使用
 ```
 
 #### 构建配置
@@ -180,7 +180,7 @@ GitHub Actions工作流（`.github/workflows/deploy.yml`）执行以下步骤：
 1. **检查Actions状态**：访问仓库 → Actions标签页查看运行状态
 2. **验证Pages配置**：仓库 → Settings → Pages，确认部署来源为`GitHub Actions`
 3. **访问在线版本**：https://xinyvpeng.github.io/USTB_travelNet/
-4. **测试认证功能**：使用在GitHub Secrets中设置的密码登录
+ 4. **测试认证功能**：使用密码"123"登录（公开密码，任何人都可以使用）
 
 ### 手动构建与本地测试
 ```bash
@@ -188,10 +188,11 @@ GitHub Actions工作流（`.github/workflows/deploy.yml`）执行以下步骤：
 npm install          # 安装依赖
 npm run dev         # 开发服务器 (http://localhost:3000)
 
-# 生产构建（需要环境变量）
-export VITE_AUTH_PASSWORD=your_password  # Linux/Mac
-set VITE_AUTH_PASSWORD=your_password     # Windows CMD
-$env:VITE_AUTH_PASSWORD="your_password"  # Windows PowerShell
+# 生产构建（可选环境变量）
+# 默认密码为123，如需自定义可设置环境变量
+export VITE_AUTH_PASSWORD=123  # Linux/Mac（默认值）
+set VITE_AUTH_PASSWORD=123     # Windows CMD（默认值）
+$env:VITE_AUTH_PASSWORD="123"  # Windows PowerShell（默认值）
 
 npm run build       # 构建生产版本到docs/目录
 npm run preview     # 预览构建结果
@@ -200,12 +201,11 @@ npm run preview     # 预览构建结果
 ### 故障排除
 #### 部署失败
 1. 检查GitHub Actions日志中的具体错误信息
-2. 确认`VITE_AUTH_PASSWORD` secret已正确设置
+ 2. 确认工作流文件中的密码配置正确（默认值为"123"）
 3. 验证`vite.config.js`中的base路径配置
 
 #### 环境变量问题
-如果未设置`VITE_AUTH_PASSWORD`，构建会成功但登录功能会显示错误信息：
-> "系统配置错误：认证密码未配置。请检查环境变量设置。"
+项目使用默认密码"123"，如需自定义可设置环境变量覆盖。如果遇到登录问题，请检查构建时的密码配置。
 
 
 
