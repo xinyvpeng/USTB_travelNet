@@ -135,58 +135,83 @@ const CONFIG = {
 
 ## 🚢 部署到GitHub Pages
 
-### 方法一：自动部署（GitHub Actions）
+### 当前自动化部署流程
+项目已配置完整的GitHub Actions自动化部署流程，推送到`master`分支后自动构建并部署到GitHub Pages。
 
-1. 在GitHub创建新仓库
-2. 推送代码到仓库
-3. 进入仓库 Settings → Pages
-4. 选择 Source: GitHub Actions
-5. 使用以下工作流配置（创建 `.github/workflows/deploy.yml`）：
+#### 触发条件
+- **自动触发**：每次推送到 `master` 分支
+- **手动触发**：在GitHub Actions页面可手动运行工作流（`workflow_dispatch`）
 
+#### 部署步骤
+GitHub Actions工作流（`.github/workflows/deploy.yml`）执行以下步骤：
+1. **检出代码**：拉取最新代码
+2. **设置Node.js环境**：使用Node.js 18
+3. **安装依赖**：执行 `npm ci` 安装项目依赖
+4. **构建项目**：执行 `npm run build`，注入环境变量
+5. **配置Pages**：设置GitHub Pages环境
+6. **上传构建产物**：将`docs`目录内容上传为Pages Artifact
+7. **部署到GitHub Pages**：自动发布到https://xinyvpeng.github.io/USTB_travelNet/
+
+#### 环境变量配置
+**重要**：项目使用环境变量进行身份验证配置：
+- **变量名**：`VITE_AUTH_PASSWORD`
+- **用途**：用于登录认证的密码（已移除默认测试密码"123"）
+- **配置方法**：
+  1. 在GitHub仓库中：Settings → Secrets and variables → Actions
+  2. 点击"New repository secret"
+  3. 名称：`VITE_AUTH_PASSWORD`
+  4. 值：设置您的安全密码
+  5. 点击"Add secret"
+
+环境变量在构建时自动注入（工作流第42-43行）：
 ```yaml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
-      - run: npm run build
-      - uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+- name: Build project
+  run: npm run build
+  env:
+    VITE_AUTH_PASSWORD: ${{ secrets.VITE_AUTH_PASSWORD }}
 ```
 
-### 方法二：手动部署
+#### 构建配置
+- **构建输出目录**：`docs/`（在`vite.config.js`中配置）
+- **基础路径**：`/USTB_travelNet/`（适配GitHub Pages子路径）
+- **源代码映射**：生产环境包含sourcemap便于调试
 
-1. 构建项目：
-   ```bash
-   npm run build
-   ```
+### 验证部署
+1. **检查Actions状态**：访问仓库 → Actions标签页查看运行状态
+2. **验证Pages配置**：仓库 → Settings → Pages，确认部署来源为`GitHub Actions`
+3. **访问在线版本**：https://xinyvpeng.github.io/USTB_travelNet/
+4. **测试认证功能**：使用在GitHub Secrets中设置的密码登录
 
-2. 将 `dist` 目录内容推送到 `gh-pages` 分支：
-   ```bash
-   # 创建并切换到 gh-pages 分支
-   git checkout --orphan gh-pages
-   git rm -rf .
-   cp -r dist/* .
-   git add .
-   git commit -m "Deploy to GitHub Pages"
-   git push origin gh-pages
-   ```
+### 手动构建与本地测试
+```bash
+# 本地开发
+npm install          # 安装依赖
+npm run dev         # 开发服务器 (http://localhost:3000)
 
-3. 在仓库 Settings → Pages 中设置 Source 为 `gh-pages` 分支
+# 生产构建（需要环境变量）
+export VITE_AUTH_PASSWORD=your_password  # Linux/Mac
+set VITE_AUTH_PASSWORD=your_password     # Windows CMD
+$env:VITE_AUTH_PASSWORD="your_password"  # Windows PowerShell
 
-访问地址：`https://<username>.github.io/<repository-name>/`
+npm run build       # 构建生产版本到docs/目录
+npm run preview     # 预览构建结果
+```
+
+### 故障排除
+#### 部署失败
+1. 检查GitHub Actions日志中的具体错误信息
+2. 确认`VITE_AUTH_PASSWORD` secret已正确设置
+3. 验证`vite.config.js`中的base路径配置
+
+#### 环境变量问题
+如果未设置`VITE_AUTH_PASSWORD`，构建会成功但登录功能会显示错误信息：
+> "系统配置错误：认证密码未配置。请检查环境变量设置。"
+
+
+
+### 部署状态
+![GitHub Pages](https://img.shields.io/github/deployments/xinyvpeng/USTB_travelNet/github-pages?label=GitHub%20Pages)
+![Last Commit](https://img.shields.io/github/last-commit/xinyvpeng/USTB_travelNet)
 
 ## 📊 性能优化
 
@@ -226,29 +251,6 @@ npm install
 3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
-
-## 🚀 部署
-
-### GitHub Pages 自动部署
-项目已配置 GitHub Actions 工作流，推送代码到 `master` 分支时自动构建并部署到 GitHub Pages。
-
-**访问地址**：https://xinyvpeng.github.io/USTB_travelNet/
-
-**手动设置**（如果自动部署未生效）：
-1. 访问仓库 Settings → Pages
-2. Source 选择：`master` 分支，`/dist` 文件夹
-3. 点击 Save
-
-**本地开发**：
-```bash
-npm install          # 安装依赖
-npm run dev         # 开发服务器 (http://localhost:5173)
-npm run build       # 构建生产版本
-```
-
-### 部署状态
-![GitHub Pages](https://img.shields.io/github/deployments/xinyvpeng/USTB_travelNet/github-pages?label=GitHub%20Pages)
-![Last Commit](https://img.shields.io/github/last-commit/xinyvpeng/USTB_travelNet)
 
 ## 📄 许可证
 
