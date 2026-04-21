@@ -9,7 +9,7 @@ export const CONFIG = {
   
   // 认证配置
   auth: {
-    password: import.meta.env.VITE_AUTH_PASSWORD || '123', // 环境变量未设置时使用默认密码 "123"
+    password: import.meta.env.VITE_AUTH_PASSWORD || '', // 环境变量未设置时为空字符串，禁止使用测试密码
     storageKey: 'travelnet_auth_token'
   },
   

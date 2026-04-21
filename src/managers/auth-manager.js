@@ -30,7 +30,7 @@ export const AuthManager = {
 
   login(password) {
     // 检查密码是否已配置
-    if (!CONFIG.auth.password) {
+    if (!CONFIG.auth.password || CONFIG.auth.password.trim() === '') {
       console.error('认证密码未配置：请设置环境变量 VITE_AUTH_PASSWORD');
       return { 
         success: false, 
@@ -55,6 +55,9 @@ export const AuthManager = {
         window.UIManager.updateAuthUI();
       }
       
+      // 触发登录成功事件，供其他组件监听
+      window.dispatchEvent(new CustomEvent('auth:login'));
+      
       console.log('登录成功');
       return { success: true, message: '登录成功' };
     } else {
@@ -76,6 +79,9 @@ export const AuthManager = {
     if (window.UIManager && typeof window.UIManager.updateAuthUI === 'function') {
       window.UIManager.updateAuthUI();
     }
+    
+    // 触发退出登录事件，供其他组件监听
+    window.dispatchEvent(new CustomEvent('auth:logout'));
     
     console.log('已退出登录');
     return { success: true, message: '已退出登录' };

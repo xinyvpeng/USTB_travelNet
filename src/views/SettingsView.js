@@ -3,6 +3,7 @@ import { BaseView } from './BaseView.js';
 export class SettingsView extends BaseView {
   constructor(container, params = {}) {
     super(container, params);
+    this.authEventHandler = null;
   }
   
   async render() {
@@ -321,6 +322,11 @@ export class SettingsView extends BaseView {
     if (saveSettingsBtn) {
       saveSettingsBtn.addEventListener('click', () => this.handleSaveSettings());
     }
+    
+    // 监听认证状态变化事件
+    this.authEventHandler = () => this.updateAuthStatus();
+    window.addEventListener('auth:login', this.authEventHandler);
+    window.addEventListener('auth:logout', this.authEventHandler);
   }
   
   showLoginForm() {
@@ -375,7 +381,7 @@ export class SettingsView extends BaseView {
     } else {
       // 显示错误
       if (window.UIManager && window.UIManager.showNotification) {
-        window.UIManager.showNotification('密码错误，请重试', 'danger');
+        window.UIManager.showNotification(result.message || '密码错误，请重试', 'danger');
       }
       
       // 清空密码字段并聚焦
@@ -512,5 +518,11 @@ export class SettingsView extends BaseView {
   
   async onLeave() {
     console.log('离开设置视图');
+    // 移除事件监听器
+    if (this.authEventHandler) {
+      window.removeEventListener('auth:login', this.authEventHandler);
+      window.removeEventListener('auth:logout', this.authEventHandler);
+      this.authEventHandler = null;
+    }
   }
 }
