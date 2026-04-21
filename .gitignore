@@ -2,7 +2,7 @@
 node_modules/
 
 # Build output
-# dist/  # Uncomment if you don't want to commit built files
+dist/  # Vite构建输出目录（旧版）
 
 # Project planning and documentation files (not needed in repository)
 task_plan.md
@@ -19,6 +19,7 @@ plan.md
 .env.development.local
 .env.test.local
 .env.production.local
+.env.example  # 环境变量示例文件，包含配置说明但不应提交
 
 # Logs
 npm-debug.log*
@@ -30,6 +31,7 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+*.backup  # 代码备份文件
 .DS_Store
 
 # OS generated files
