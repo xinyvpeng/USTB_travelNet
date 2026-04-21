@@ -37,10 +37,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-        - name: Build project
-         run: npm run build
-         env:
-           VITE_AUTH_PASSWORD: "123"  # 公开密码，任何人都可以使用
+      - name: Build project
+        run: npm run build
+        env:
+          VITE_AUTH_PASSWORD: "123"  # 公开密码，任何人都可以使用
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
