@@ -1593,7 +1593,7 @@ const NetworkGraph = {
       .attr('text-anchor', 'middle')
       .attr('dy', d => d.radius + 12)
       .attr('fill', '#f0f4ff')
-      .attr('font-size', '8px')
+      .attr('font-size', '10px')
       .attr('font-weight', 'bold')
       .text(d => d.name)
       .style('pointer-events', 'none');

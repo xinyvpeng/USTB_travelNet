@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script type="module" crossorigin src="/USTB_travelNet/assets/index-COFbb_tM.js"></script>
-  <link rel="modulepreload" crossorigin href="/USTB_travelNet/assets/vendor-B_UG5KUY.js">
-  <link rel="stylesheet" crossorigin href="/USTB_travelNet/assets/index-CYpSOD6w.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
+  <script type="module" crossorigin src="/USTB_travelNet/assets/index-5s-iAE0k.js"></script>
+  <link rel="modulepreload" crossorigin href="/USTB_travelNet/assets/vendor-CbUDFNMC.js">
+  <link rel="stylesheet" crossorigin href="/USTB_travelNet/assets/index-CCZ8L36L.css">
 </head>
 <body>
   <div class="app-container">
@@ -46,115 +47,66 @@
       </div>
     </header>
 
-    <!-- 主内容区域 -->
+    <!-- 导航菜单 -->
+    <nav class="app-nav">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="#network" class="nav-link" data-route="network">
+            <i class="fas fa-network-wired"></i>
+            <span>网络图</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#cities" class="nav-link" data-route="cities">
+            <i class="fas fa-city"></i>
+            <span>城市列表</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#records" class="nav-link" data-route="records">
+            <i class="fas fa-passport"></i>
+            <span>旅游记录</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#data" class="nav-link" data-route="data">
+            <i class="fas fa-database"></i>
+            <span>数据管理</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#settings" class="nav-link" data-route="settings">
+            <i class="fas fa-cog"></i>
+            <span>设置</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- 主内容区域 - 动态加载视图 -->
     <main class="app-main">
-      <div class="sidebar-left">
-        <section class="control-panel">
-          <h2><i class="fas fa-sliders-h"></i> 控制面板</h2>
-          <div class="control-group">
-            <button id="randomCityBtn" class="btn-primary">
-              <i class="fas fa-random"></i> 随机选择城市
-            </button>
-            <div class="search-box">
-              <i class="fas fa-search"></i>
-              <input type="text" id="citySearch" placeholder="搜索城市名称...">
+      <div id="app-content" class="app-content">
+        <!-- 视图将动态加载到这里 -->
+        <div class="welcome-view">
+          <div class="welcome-content">
+            <div class="welcome-icon">
+              <i class="fas fa-satellite-dish fa-spin"></i>
             </div>
-            <button id="addCityBtn" class="btn-secondary">
-              <i class="fas fa-plus-circle"></i> 手动添加城市
-            </button>
-          </div>
-        </section>
-
-        <section class="city-list">
-          <h2><i class="fas fa-city"></i> 城市列表</h2>
-          <div class="filter-controls">
-            <span>显示 <span id="cityCount">0</span> 个城市</span>
-            <select id="sortBy">
-              <option value="distance">按距离排序</option>
-              <option value="name">按名称排序</option>
-              <option value="population">按人口排序</option>
-            </select>
-          </div>
-          <div class="city-list-container" id="cityList">
-            <!-- 城市列表动态生成 -->
-          </div>
-        </section>
-      </div>
-
-      <div class="visualization-area">
-        <div class="viz-header">
-          <h2><i class="fas fa-network-wired"></i> 城市网络图</h2>
-          <div class="viz-controls">
-            <button id="zoomInBtn" class="btn-icon"><i class="fas fa-search-plus"></i></button>
-            <button id="zoomOutBtn" class="btn-icon"><i class="fas fa-search-minus"></i></button>
-            <button id="resetViewBtn" class="btn-icon"><i class="fas fa-sync-alt"></i></button>
-            <div class="legend">
-              <span class="legend-item"><span class="legend-color distance-far"></span> 远距离</span>
-              <span class="legend-item"><span class="legend-color distance-near"></span> 近距离</span>
-            </div>
-          </div>
-        </div>
-        <div class="viz-container">
-          <div id="networkGraph"></div>
-          <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner">
-              <i class="fas fa-satellite"></i>
-              <span>正在加载城市数据...</span>
+            <h2>欢迎使用 TravelNet</h2>
+            <p>智能周边城市探索系统</p>
+            <div class="welcome-hint">
+              <p>正在加载应用，请稍候...</p>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="sidebar-right">
-        <section class="travel-records">
-          <h2><i class="fas fa-passport"></i> 我的旅游记录</h2>
-          <div class="records-controls">
-            <button id="addRecordBtn" class="btn-small">
-              <i class="fas fa-plus"></i> 新增记录
-            </button>
-            <button id="clearRecordsBtn" class="btn-small btn-danger">
-              <i class="fas fa-trash"></i> 清空
-            </button>
-          </div>
-          <div class="records-container" id="recordsContainer">
-            <!-- 旅游记录动态生成 -->
-            <div class="empty-state">
-              <i class="fas fa-compass"></i>
-              <p>暂无旅游记录</p>
-              <p class="empty-hint">点击"随机选择城市"开始探索</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="selected-city-info" id="selectedCityInfo" style="display: none;">
-          <h2><i class="fas fa-map-pin"></i> 选中城市</h2>
-          <div class="city-details">
-            <h3 id="selectedCityName">城市名称</h3>
-            <div class="city-stats">
-              <div class="stat">
-                <span class="stat-label">距离</span>
-                <span class="stat-value" id="selectedCityDistance">0 km</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">方位角</span>
-                <span class="stat-value" id="selectedCityBearing">0°</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">人口</span>
-                <span class="stat-value" id="selectedCityPopulation">0</span>
-              </div>
-            </div>
-            <p class="city-description" id="selectedCityDescription">城市描述...</p>
-            <div class="action-buttons">
-              <button id="confirmCityBtn" class="btn-success">
-                <i class="fas fa-check-circle"></i> 确定到访
-              </button>
-              <button id="cancelCityBtn" class="btn-secondary">
-                <i class="fas fa-times-circle"></i> 取消
-              </button>
-            </div>
-          </div>
-        </section>
+      
+      <!-- 全局加载遮罩 -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+          <i class="fas fa-satellite"></i>
+          <span>正在加载城市数据...</span>
+        </div>
       </div>
     </main>
 
@@ -166,11 +118,15 @@
           <i class="fas fa-database"></i>
           <span id="storageUsage">本地存储: 0 KB</span>
         </span>
+        <span class="current-view">
+          <i class="fas fa-map"></i>
+          <span id="currentViewName">网络图</span>
+        </span>
       </div>
       <div class="footer-links">
-        <a href="#" id="exportDataBtn"><i class="fas fa-download"></i> 导出数据</a>
-        <a href="#" id="importDataBtn"><i class="fas fa-upload"></i> 导入数据</a>
-        <a href="#" id="helpBtn"><i class="fas fa-question-circle"></i> 帮助</a>
+        <span class="footer-copyright">
+          TravelNet &copy; 2023 - 智能周边城市探索系统
+        </span>
       </div>
     </footer>
 
