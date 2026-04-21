@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   base: '/USTB_travelNet/',
   build: {
-    outDir: 'dist',
+    outDir: 'docs',
     sourcemap: true,
     rollupOptions: {
       output: {
