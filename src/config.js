@@ -1,5 +1,5 @@
 // TravelNet 应用配置
-// 注意：认证密码通过环境变量 VITE_AUTH_PASSWORD 设置，本地测试默认使用 "123"
+// 注意：认证密码通过环境变量 VITE_AUTH_PASSWORD 设置
 
 export const CONFIG = {
   centerLat: 39.99048,      // 北京科技大学纬度
@@ -9,7 +9,7 @@ export const CONFIG = {
   
   // 认证配置
   auth: {
-    password: import.meta.env.VITE_AUTH_PASSWORD || '', // 环境变量未设置时为空字符串，禁止使用测试密码
+    password: import.meta.env.VITE_AUTH_PASSWORD, // 必须通过环境变量设置，禁止使用测试密码
     storageKey: 'travelnet_auth_token'
   },
   
