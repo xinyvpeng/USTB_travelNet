@@ -94,7 +94,7 @@ export class SettingsView extends BaseView {
                     <label for="loginPassword"><i class="fas fa-key"></i> 认证密码</label>
                     <input type="password" id="loginPassword" placeholder="请输入认证密码" autocomplete="current-password" required>
                     <div class="form-hint">
-                      提示：认证密码通过环境变量 VITE_AUTH_PASSWORD 配置，仅项目所有者知晓。
+                       提示：认证密码：123（任何人都可以使用此密码登录记录自己的旅行数据）
                     </div>
                   </div>
                   <div class="form-actions">

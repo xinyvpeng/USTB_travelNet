@@ -9,9 +9,9 @@ const CONFIG = {
   radiusKm: 500,            // 探索半径（公里）
   earthRadiusKm: 6371,      // 地球半径（公里）
   
-  // 认证配置 - 密码必须通过环境变量 VITE_AUTH_PASSWORD 设置
+  // 认证配置 - 默认密码123，可通过环境变量 VITE_AUTH_PASSWORD 覆盖
   auth: {
-    password: import.meta.env.VITE_AUTH_PASSWORD, // 必须通过环境变量设置
+    password: import.meta.env.VITE_AUTH_PASSWORD || '123', // 默认密码123，环境变量可覆盖
     storageKey: 'travelnet_auth_token'
   },
   
